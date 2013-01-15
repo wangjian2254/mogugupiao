@@ -1,0 +1,15 @@
+cron:
+
+- description: memcache sync
+  url: /InfoUpdate?memcache=True
+  schedule: every 1 minutes
+
+- description: gu piao memcache
+  url: /InfoUpdate
+  schedule: every 10 minutes
+
+
+
+
+
+
