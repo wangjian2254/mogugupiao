@@ -3,6 +3,7 @@
 profile
 #python
 *.pyc
+.idea/workspace.xml
 # xcode noise
 build/*
 *.mode1
