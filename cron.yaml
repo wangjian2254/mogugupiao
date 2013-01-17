@@ -2,11 +2,25 @@ cron:
 
 - description: memcache sync
   url: /InfoUpdate?memcache=True
-  schedule: every 1 minutes
+  schedule: every 1 minutes from 08:00 to 17:00
+  timezone: Asia/Shanghai
 
 - description: gu piao memcache
   url: /InfoUpdate
-  schedule: every 10 minutes
+  schedule: every 10 minutes from 08:00 to 17:00
+  timezone: Asia/Shanghai
+
+
+- description: get need gu piao
+  url: /needSyncGuPiao
+  schedule: every 9 minutes
+  timezone: Asia/Shanghai
+
+
+- description: get need gu piao
+  url: /deleteNeedSyncGuPiao
+  schedule: every 10 minutes from 01:00 to 02:00
+  timezone: Asia/Shanghai
 
 
 

@@ -2,7 +2,7 @@
 #author:u'王健'
 #Date: 12-7-10
 #Time: 下午9:50
-from news.models import  NeedSyncGuPiao
+from news.models import  NeedSyncGuPiao, GuPiaoGroup
 import setting
 from tools.page import Page
 from google.appengine.api import urlfetch
@@ -45,6 +45,87 @@ class GuPiao(Page):
                     self.response.out.write(u'查询的 “%s” 代码不存在'%gupiaono)
             else:
                 self.response.out.write(u'查询“%s”出错'%gupiaono)
+
+class DeleteNeedSyncGuPiao(Page):
+    def get(self):
+        needGuPiao=NeedSyncGuPiao.get_by_key_name('syncgupiao')
+        if needGuPiao:
+            date=datetime.datetime.utcnow()+datetime.timedelta(hours =8)
+            if date.strftime('%Y-%m-%d')!=needGuPiao.date:
+                pam={}
+                pam['needdelgroupid']=','.join(needGuPiao.memcachegroupid)
+                login_data=urllib.urlencode(pam)
+                result = urlfetch.fetch(
+                    url =setting.WEBURL+'/DeleteNeedSyncGuPiao',
+                    payload = login_data,
+                    method = urlfetch.POST,
+                    headers = {'Content-Type':'application/x-www-form-urlencoded',
+                               'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
+                    follow_redirects = False,deadline=20)
+                if result.status_code == 200 :
+                    needGuPiao.memcachegroupid=[]
+                    needGuPiao.gpcode=[]
+                    needGuPiao.put()
+class NeedSyncGuPiao(Page):
+    def get(self):
+        groupidList=[]
+        result = urlfetch.fetch(
+            url =setting.WEBURL+'/NeedSyncGuPiao',
+#                    payload = login_data,
+            method = urlfetch.GET,
+            headers = {'Content-Type':'application/x-www-form-urlencoded',
+                       'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
+            follow_redirects = False,deadline=20)
+        if result.status_code == 200 :
+            groupidList.extend(result.content.split(','))
+            if groupidList:
+                needGuPiao=memcache.get('syncgupiao')
+                if not needGuPiao:
+                    needGuPiao=NeedSyncGuPiao.get_by_key_name('syncgupiao')
+                if needGuPiao :
+                    for groupid in groupidList:
+                        gupiaoGroup=memcache.get('group'+groupid)
+                        if not gupiaoGroup:
+                            gupiaoGroup=GuPiaoGroup.get_by_key_name('g'+groupid)
+                        if gupiaoGroup:
+                            memcache.set('group'+groupid,gupiaoGroup,36000)
+                            if gupiaoGroup.realNo not in needGuPiao.gpcode:
+                                needGuPiao.gpcode.append(gupiaoGroup.realNo)
+                                needGuPiao.memcachegroupid.append("needsyncgupiao_groupid%s"%gupiaoGroup.key().name())
+                                needGuPiao.put()
+                    memcache.set('syncgupiao',needGuPiao,36000)
+class MarkGroup(Page):
+    def get(self):
+        groupid=self.request.get('groupid')
+        dm=self.request.get('dm')
+        type=self.request.get('type')
+        realNo=self.request.get('realNo')
+        gupiaoGroup=memcache.get('group'+groupid)
+        if not gupiaoGroup:
+            gupiaoGroup=GuPiaoGroup.get_by_key_name('g'+groupid)
+            if gupiaoGroup:
+                memcache.set('group'+groupid,gupiaoGroup,36000)
+        if not gupiaoGroup:
+            if groupid and dm and type and realNo:
+                gupiaoGroup=GuPiaoGroup(key_name='g'+groupid)
+                gupiaoGroup.gpcode=dm
+                gupiaoGroup.realNo=realNo
+                gupiaoGroup.type=type
+                gupiaoGroup.put()
+                memcache.set('group'+groupid,gupiaoGroup,36000)
+            else:
+                self.error(500)
+                return
+        needGuPiao=memcache.get('syncgupiao')
+        if not needGuPiao:
+            needGuPiao=NeedSyncGuPiao.get_by_key_name('syncgupiao')
+        if needGuPiao and gupiaoGroup.realNo not in needGuPiao.gpcode:
+            needGuPiao.gpcode.append(gupiaoGroup.realNo)
+            needGuPiao.memcachegroupid.append("needsyncgupiao_groupid%s"%gupiaoGroup.key().name())
+            needGuPiao.put()
+            memcache.set('syncgupiao',needGuPiao,36000)
+
+        pass
 
 class InfoUpdate(Page):
     def get(self):

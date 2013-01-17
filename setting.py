@@ -14,4 +14,8 @@ adminname='000'
 #
 #
 #APPCODE_ID='a4_1'
-APPCODE_TYPE='0'# 在a4 下的 a4-s0 节点下
+APPCODE_TYPE='4'# 在a4 下的 a4-s4 节点下
+
+WEBURL='http://group.mmggoo.com'
+
+
