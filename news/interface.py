@@ -6,7 +6,7 @@ from news.models import  NeedSyncGuPiao, GuPiaoGroup
 import setting
 from tools.page import Page
 from google.appengine.api import urlfetch
-import urllib
+import urllib,json
 import logging
 import datetime
 from google.appengine.api import memcache
@@ -166,9 +166,41 @@ class InfoUpdate(Page):
         for gupiaoArr in resultlist:
             gpstrlist.extend(gupiaoArr.split('\n'))
             #self.response.out.write(u'%s'%gupiaoArr)
+        gupiaolist=[]
+        post_data={}
         for gupiaostr in gpstrlist:
-            pass
-#        result = urlfetch.fetch(
+            flag=memcache.get(gupiaostr)
+            if flag:
+                continue
+            memcache.set(gupiaostr,'flag',3600)
+            gupiao_data_arr=gupiaostr[11:].split('=')
+            gupiao_group=memcache.get(gupiao_data_arr[0])
+            if not gupiao_group:
+                gupiao_group=GuPiaoGroup.all().filter('realNo =',gupiao_data_arr[0]).fetch(1)
+                if len(gupiao_group)==1:
+                    gupiao_group=gupiao_group[0]
+                    memcache.set(gupiao_group.realNo,gupiao_group,3600*24*3)
+                else:
+                    gupiao_group=None
+            if gupiao_group:
+                groupid=gupiao_group.key().name()
+                gupiaolist.append(groupid)
+#                post_data['flag'+groupid]=gupiao_data_arr[-25:]
+                post_data[groupid]="{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min%s/a777_1*]','daily':'[*sys/daily%s/a777_1*]','weekly':'[*sys/weekly%s/a777_1*]','monthly':'[*sys/monthly%s/a777_1*]','data':'%s'}"%(groupid[1:],gupiao_group.realNo,gupiao_group.type,groupid,groupid,groupid,groupid,gupiao_data_arr[1][1:-2])
+#                json.dumps({'groupid': groupid[1:], 'realNo': gupiao_group.realNo,
+#                            'type': gupiao_group.type, 'data': gupiao_data_arr[1][1:-2]})
+        post_data['groupids']=','.join(gupiaolist)
+        result = urlfetch.fetch(
+            url =setting.WEBURL+'/SyncGuPiao',
+            payload = urllib.urlencode(post_data),
+            method = urlfetch.POST,
+            headers = {'Content-Type':'application/x-www-form-urlencoded',
+                       'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
+            follow_redirects = False,deadline=30)
+        if result.status_code == 200 :
+            return
+
+            #        result = urlfetch.fetch(
 #            url = baseurl,
 ##                    payload = login_data,
 #            method = urlfetch.GET,
