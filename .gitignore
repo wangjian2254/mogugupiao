@@ -18,3 +18,5 @@ xcuserdata
 # svn & cvs
 .svn
 CVS
+
+.idea/workspace.xml
