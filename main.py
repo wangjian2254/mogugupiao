@@ -15,14 +15,14 @@
 # limitations under the License.
 #
 import webapp2
-from news.interface import InfoUpdate, GuPiao, MarkGroup, NeedSyncGuPiao, DeleteNeedSyncGuPiao
+from news.interface import InfoUpdate, GuPiao, MarkGroup, DeleteNeedSyncGuPiao, NeedSyncGuPiaoDm
 from news.weather import Weather
 
 
 app = webapp2.WSGIApplication([
                                         ('/InfoUpdate', InfoUpdate),
                                         ('/markGroup', MarkGroup),
-                                        ('/needSyncGuPiao', NeedSyncGuPiao),
+                                        ('/needSyncGuPiao', NeedSyncGuPiaoDm),
                                         ('/deleteNeedSyncGuPiao', DeleteNeedSyncGuPiao),
 
 

@@ -16,6 +16,7 @@ adminname='000'
 #APPCODE_ID='a4_1'
 APPCODE_TYPE='4'# 在a4 下的 a4-s4 节点下
 
-WEBURL='http://group.mmggoo.com'
+#WEBURL='http://192.168.1.104:8080'
+WEBURL='http://im.zxxsbook.com'
 
 

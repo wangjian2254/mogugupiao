@@ -66,7 +66,7 @@ class DeleteNeedSyncGuPiao(Page):
                     needGuPiao.memcachegroupid=[]
                     needGuPiao.gpcode=[]
                     needGuPiao.put()
-class NeedSyncGuPiao(Page):
+class NeedSyncGuPiaoDm(Page):
     def get(self):
         groupidList=[]
         result = urlfetch.fetch(
@@ -148,15 +148,18 @@ class InfoUpdate(Page):
                     urllist.append(tempurl)
                     tempurl=baseurl
                 tempurl+='%s,'%gp
+            if tempurl==baseurl and 0==len(urllist):
+                return
+            if tempurl!=baseurl:
+                urllist.append(tempurl)
         memcache.set('needsyncgupiao',urllist[10:],3600)
-
 
         resultlist=[]
         rpcs=[]
         for url in urllist[:10]:
-            rpc = urlfetch.create_rpc()
+            rpc = urlfetch.create_rpc(deadline=30)
             rpc.callback = self.create_callback(rpc,resultlist)
-            rpc.deadline=30
+
             urlfetch.make_fetch_call(rpc, url,headers = {'Content-Type':'application/x-www-form-urlencoded',
                                    'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'})
             rpcs.append(rpc)
@@ -169,6 +172,8 @@ class InfoUpdate(Page):
         gupiaolist=[]
         post_data={}
         for gupiaostr in gpstrlist:
+            if not gupiaostr:
+                continue
             flag=memcache.get(gupiaostr)
             if flag:
                 continue
@@ -186,8 +191,9 @@ class InfoUpdate(Page):
                 groupid=gupiao_group.key().name()
                 gupiaolist.append(groupid)
 #                post_data['flag'+groupid]=gupiao_data_arr[-25:]
-                post_data[groupid]="{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min%s/a777_1*]','daily':'[*sys/daily%s/a777_1*]','weekly':'[*sys/weekly%s/a777_1*]','monthly':'[*sys/monthly%s/a777_1*]','data':'%s'}"%(groupid[1:],gupiao_group.realNo,gupiao_group.type,groupid,groupid,groupid,groupid,gupiao_data_arr[1][1:-2])
-#                json.dumps({'groupid': groupid[1:], 'realNo': gupiao_group.realNo,
+                post_data[groupid]="{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min_%s_%s/a777_1*]','daily':'[*sys/daily_%s_%s/a777_1*]','weekly':'[*sys/weekly_%s_%s/a777_1*]','monthly':'[*sys/monthly_%s_%s/a777_1*]','data':'%s'}"%(groupid[1:],gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_data_arr[1][1:-2])
+                post_data[groupid]=post_data[groupid].encode('gbk').decode('gbk').encode('utf-8')
+                #json.dumps({'groupid': groupid[1:], 'realNo': gupiao_group.realNo,
 #                            'type': gupiao_group.type, 'data': gupiao_data_arr[1][1:-2]})
         post_data['groupids']=','.join(gupiaolist)
         result = urlfetch.fetch(
