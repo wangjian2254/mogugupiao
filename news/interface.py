@@ -124,6 +124,34 @@ class MarkGroup(Page):
             needGuPiao.memcachegroupid.append("needsyncgupiao_groupid%s"%gupiaoGroup.key().name())
             needGuPiao.put()
             memcache.set('syncgupiao',needGuPiao,36000)
+            baseurl='http://hq.sinajs.cn/list='
+            result = urlfetch.fetch(
+                url =baseurl+realNo,
+                method = urlfetch.GET,
+                headers = {'Content-Type':'application/x-www-form-urlencoded',
+                           'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
+                follow_redirects = False,deadline=20)
+            if result.status_code == 200 :
+                for gupiaostr in result.content.decode('gbk').split('\n'):
+                    if gupiaostr:
+                        gupiao_data_arr=gupiaostr[11:].split('=')
+#                        gupiao_group=memcache.get(gupiao_data_arr[0])
+#                        if not gupiao_group:
+#                            gupiao_group=GuPiaoGroup.all().filter('realNo =',gupiao_data_arr[0]).fetch(1)
+#                            if len(gupiao_group)==1:
+#                                gupiao_group=gupiao_group[0]
+#                                memcache.set(gupiao_group.realNo,gupiao_group,3600*24*3)
+#                            else:
+#                                gupiao_group=None
+#                        if gupiao_group:
+#                            groupid=gupiao_group.key().name()
+#                            gupiaolist.append(groupid)
+            #                post_data['flag'+groupid]=gupiao_data_arr[-25:]
+                        self.response.out.write("{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min_%s_%s/a777_1*]','daily':'[*sys/daily_%s_%s/a777_1*]','data':'%s'}"%(groupid,realNo,type,realNo,type,realNo,type,gupiao_data_arr[1][1:-2]))
+
+
+
+
 
         pass
 
@@ -191,7 +219,7 @@ class InfoUpdate(Page):
                 groupid=gupiao_group.key().name()
                 gupiaolist.append(groupid)
 #                post_data['flag'+groupid]=gupiao_data_arr[-25:]
-                post_data[groupid]="{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min_%s_%s/a777_1*]','daily':'[*sys/daily_%s_%s/a777_1*]','weekly':'[*sys/weekly_%s_%s/a777_1*]','monthly':'[*sys/monthly_%s_%s/a777_1*]','data':'%s'}"%(groupid[1:],gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_data_arr[1][1:-2])
+                post_data[groupid]="{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min_%s_%s/a777_1*]','daily':'[*sys/daily_%s_%s/a777_1*]','data':'%s'}"%(groupid[1:],gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_group.realNo,gupiao_group.type,gupiao_data_arr[1][1:-2])
                 post_data[groupid]=post_data[groupid].encode('gbk').decode('gbk').encode('utf-8')
                 #json.dumps({'groupid': groupid[1:], 'realNo': gupiao_group.realNo,
 #                            'type': gupiao_group.type, 'data': gupiao_data_arr[1][1:-2]})
