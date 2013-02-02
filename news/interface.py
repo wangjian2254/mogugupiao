@@ -66,6 +66,7 @@ class DeleteNeedSyncGuPiao(Page):
                     needGuPiao.memcachegroupid=[]
                     needGuPiao.gpcode=[]
                     needGuPiao.put()
+                    memcache.delete('syncgupiao')
 class NeedSyncGuPiaoDm(Page):
     def get(self):
         groupidList=[]
@@ -77,6 +78,7 @@ class NeedSyncGuPiaoDm(Page):
                        'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
             follow_redirects = False,deadline=20)
         if result.status_code == 200 :
+            logging.info(result.content)
             groupidList.extend(result.content.split(','))
             if groupidList:
                 needGuPiao=memcache.get('syncgupiao')
@@ -92,6 +94,8 @@ class NeedSyncGuPiaoDm(Page):
                             if gupiaoGroup.realNo not in needGuPiao.gpcode:
                                 needGuPiao.gpcode.append(gupiaoGroup.realNo)
                                 needGuPiao.memcachegroupid.append("needsyncgupiao_groupid%s"%gupiaoGroup.key().name())
+                                date=datetime.datetime.utcnow()+datetime.timedelta(hours =8)
+                                needGuPiao.date=date.strftime('%Y-%m-%d')
                                 needGuPiao.put()
                     memcache.set('syncgupiao',needGuPiao,36000)
 class MarkGroup(Page):

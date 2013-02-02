@@ -16,7 +16,7 @@ cron:
 
 - description: get need gu piao
   url: /deleteNeedSyncGuPiao
-  schedule: every 2 hours
+  schedule: every 20 hours
 
 
 
