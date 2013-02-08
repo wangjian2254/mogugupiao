@@ -156,8 +156,30 @@ class MarkGroup(Page):
 
 
 
-
-        pass
+class SyncGuPiaoByID(Page):
+    def get(self):
+        groupid=self.request.get('groupid')
+        gupiaoGroup=memcache.get('group'+groupid)
+        if not gupiaoGroup:
+            gupiaoGroup=GuPiaoGroup.get_by_key_name('g'+groupid)
+            if gupiaoGroup:
+                memcache.set('group'+groupid,gupiaoGroup,36000)
+        if gupiaoGroup:
+            baseurl='http://hq.sinajs.cn/list='
+            result = urlfetch.fetch(
+                url =baseurl+gupiaoGroup.realNo,
+                method = urlfetch.GET,
+                headers = {'Content-Type':'application/x-www-form-urlencoded',
+                           'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6'},
+                follow_redirects = False,deadline=20)
+            if result.status_code == 200 :
+                for gupiaostr in result.content.decode('gbk').split('\n'):
+                    if gupiaostr:
+                        gupiao_data_arr=gupiaostr[11:].split('=')
+                        self.response.out.write("{'groupid':'%s','realNo':'%s','type':'%s','min':'[*sys/min_%s_%s/a777_1*]','daily':'[*sys/daily_%s_%s/a777_1*]','data':'%s'}"%(groupid,gupiaoGroup.realNo,gupiaoGroup.type,gupiaoGroup.realNo,gupiaoGroup.type,gupiaoGroup.realNo,gupiaoGroup.type,gupiao_data_arr[1][1:-2]))
+                        return
+        else:
+            self.error(500)
 
 class InfoUpdate(Page):
     def get(self):
