@@ -225,13 +225,18 @@ class InfoUpdate(Page):
             #self.response.out.write(u'%s'%gupiaoArr)
         gupiaolist=[]
         post_data={}
+        tmpgupiaostr=None
         for gupiaostr in gpstrlist:
             if not gupiaostr:
                 continue
-            flag=memcache.get(gupiaostr)
+            if gupiaostr.find('var hq_str_s')==0:
+                tmpgupiaostr=gupiaostr.split('=')[0]+gupiaostr[-15:-8]
+            else:
+                tmpgupiaostr=gupiaostr
+            flag=memcache.get(tmpgupiaostr)
             if flag:
                 continue
-            memcache.set(gupiaostr,'flag',3600)
+            memcache.set(tmpgupiaostr,'flag',360000)
             gupiao_data_arr=gupiaostr[11:].split('=')
             gupiao_group=memcache.get(gupiao_data_arr[0])
             if not gupiao_group:
